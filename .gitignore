@@ -1,0 +1,14 @@
+
+\.idea/dictionaries/
+
+\.idea/
+
+venv/bin/
+
+venv/lib/python3\.6/site-packages/pip-19\.0\.3-py3\.6\.egg/EGG-INFO/
+
+venv/lib/python3\.6/site-packages/pip-19\.0\.3-py3\.6\.egg/pip/
+
+venv/lib/python3\.6/site-packages/
+
+venv/
