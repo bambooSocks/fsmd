@@ -3,28 +3,32 @@
 import sys
 import xmltodict
 
+from pprint import *
+
 print("Welcome to the FSMD simulator! - Version ?? - Designed by ??")
 
 if len(sys.argv) < 3:
     print('Too few arguments.')
     sys.exit(-1)
-elif (len(sys.argv) >4):
+elif len(sys.argv) > 4:
     print('Too many arguments.')
     sys.exit(-1)
 
 iterations = int(sys.argv[1])
 
-#Parsing the FSMD description file
+# Parsing the FSMD description file
 with open(sys.argv[2]) as fd:
     fsmd_des = xmltodict.parse(fd.read())
 
-#Parsing the stimuli file
+# Parsing the stimuli file
 fsmd_stim = {}
 if len(sys.argv) == 4:
     with open(sys.argv[3]) as fd:
         fsmd_stim = xmltodict.parse(fd.read())
 
 print("\n--FSMD description--")
+
+pprint(fsmd_des)
 
 #
 # Description:
@@ -48,9 +52,9 @@ print('  ' + initial_state)
 # names and value. The default value is 0.
 #
 inputs = {}
-if(fsmd_des['fsmddescription']['inputlist'] is None):
+if fsmd_des['fsmddescription']['inputlist'] is None:
     inputs = {}
-    #No elements
+    # No elements
 else:
     if type(fsmd_des['fsmddescription']['inputlist']['input']) is str:
         # One element
@@ -68,10 +72,11 @@ for input_i in inputs:
 # The 'variables' variable of type 'dictionary' contains the list of all variables
 # names and value. The default value is 0.
 #
+
 variables = {}
-if(fsmd_des['fsmddescription']['variablelist'] is None):
+if fsmd_des['fsmddescription']['variablelist'] is None:
     variables = {}
-    #No elements
+    # No elements
 else:
     if type(fsmd_des['fsmddescription']['variablelist']['variable']) is str:
         # One element
@@ -80,6 +85,7 @@ else:
         # More elements
         for variable in fsmd_des['fsmddescription']['variablelist']['variable']:
             variables[variable] = 0
+
 print("Variables:")
 for variable in variables:
     print('  ' + variable)
@@ -90,9 +96,9 @@ for variable in variables:
 # defined operations names and expressions.
 #
 operations = {}
-if(fsmd_des['fsmddescription']['operationlist'] is None):
+if fsmd_des['fsmddescription']['operationlist'] is None:
     operations = {}
-    #No elements
+    # No elements
 else:
     for operation in fsmd_des['fsmddescription']['operationlist']['operation']:
         if type(operation) is str:
@@ -113,18 +119,19 @@ for operation in operations:
 # defined conditions names and expressions.
 #
 conditions = {}
-if(fsmd_des['fsmddescription']['conditionlist'] is None):
+if fsmd_des['fsmddescription']['conditionlist'] is None:
     conditions = {}
-    #No elements
+    # No elements
 else:
     for condition in fsmd_des['fsmddescription']['conditionlist']['condition']:
         if type(condition) is str:
-            #Only one element
+            # Only one element
             conditions[fsmd_des['fsmddescription']['conditionlist']['condition']['name']] = fsmd_des['fsmddescription']['conditionlist']['condition']['expression']
             break
         else:
-            #More than 1 element
+            # More than 1 element
             conditions[condition['name']] = condition['expression']
+
 print("Conditions:")
 for condition in conditions:
     print('  ' + condition + ' : ' + conditions[condition])
@@ -135,21 +142,23 @@ for condition in conditions:
 # one per state, with the fields 'condition', 'instruction', and 'nextstate'
 # describing the FSMD transition table.
 #
+
 fsmd = {}
 for state in states:
     fsmd[state] = []
     for transition in fsmd_des['fsmddescription']['fsmd'][state]['transition']:
         if type(transition) is str:
-            #Only one element
+            # Only one element
             fsmd[state].append({'condition': fsmd_des['fsmddescription']['fsmd'][state]['transition']['condition'],
                                 'instruction': fsmd_des['fsmddescription']['fsmd'][state]['transition']['instruction'],
                                 'nextstate': fsmd_des['fsmddescription']['fsmd'][state]['transition']['nextstate']})
             break
         else:
-            #More than 1 element
+            # More than 1 element
             fsmd[state].append({'condition' : transition['condition'],
                                 'instruction' : transition['instruction'],
                                 'nextstate' : transition['nextstate']})
+
 print("FSMD transitions table:")
 for state in fsmd:
     print('  ' + state)
@@ -207,14 +216,14 @@ def execute_instruction(instruction):
 # It returns True or False
 #
 def evaluate_condition(condition):
-    if condition == 'True' or condition=='true' or condition == 1:
+    if condition == 'True' or condition == 'true' or condition == 1:
         return True
-    if condition == 'False' or condition=='false' or condition == 0:
+    if condition == 'False' or condition == 'false' or condition == 0:
         return False
     condition_explicit = condition
     for element in conditions:
         condition_explicit = condition_explicit.replace(element, conditions[element])
-    #print('----' + condition_explicit)
+    # print('----' + condition_explicit)
     return eval(condition_explicit, {'__builtins__': None}, merge_dicts(variables, inputs))
 
 
@@ -242,6 +251,49 @@ print('\n---Start simulation---')
 ######################################
 ######################################
 
+isRunning = True
+
+# pprint(fsmd_stim['fsmdstimulus'])
+
+while isRunning and cycle < iterations:
+
+    for si in fsmd_stim['fsmdstimulus']['setinput']:
+        if si['cycle'] == cycle:
+            execute_setinput(si['expression'])
+            #TODO: reinitialize the variables after new input is loaded
+            #      should I run INITIALIZE again?
+
+    for case in fsmd[state]:
+        if evaluate_condition(case['condition']):
+
+            print("\n\n\033[32mCycle count\033[0m: {}".format(cycle))
+            print("\033[32mCurrent state\033[0m: {}\n".format(state) +
+                  "\033[32mCondition evaluated\033[0m: {}\n".format(case['condition']) +
+                  "\033[32mInstruction executed\033[0m: {}\n".format(case['instruction']) +
+                  "\033[32mNew state\033[0m: {}".format(case['nextstate']))
+
+            print("\n\033[34mVariables before\033[0m:")
+            for v in variables:
+                print("{} is {}".format(v, eval(v, {'__builtins__': None}, variables)))
+
+            execute_instruction(case['instruction'])
+
+            print("\n\033[34mVariables after\033[0m:")
+            for v in variables:
+                print("{} is {}".format(v, eval(v, {'__builtins__': None}, variables)))
+
+            state = case['nextstate']
+            if fsmd_stim != {}:
+                if state == fsmd_stim['fsmdstimulus']['endstate']:
+                    print("\n\033[31mProgram terminated due to endstate was reached\033[0m")
+                    isRunning = False
+            break
+    cycle += 1
+
+if cycle == iterations:
+    print("\n\033[31mProgram terminated due to cycle count exceeded allowed amount\033[0m")
+
+
 print('\n---End of simulation---')
 
 #
@@ -251,15 +303,15 @@ print('\n---End of simulation---')
 #
 '''
 try:
-    if (not(fsmd_stim['fsmdstimulus']['setinput'] is None)):
+    if not(fsmd_stim['fsmdstimulus']['setinput'] is None):
         for setinput in fsmd_stim['fsmdstimulus']['setinput']:
             if type(setinput) is str:
-                #Only one element
+                # Only one element
                 if int(fsmd_stim['fsmdstimulus']['setinput']['cycle']) == cycle:
                     execute_setinput(fsmd_stim['fsmdstimulus']['setinput']['expression'])
                 break
             else:
-                #More than 1 element
+                # More than 1 element
                 if int(setinput['cycle']) == cycle:
                     execute_setinput(setinput['expression'])
 except:
@@ -273,7 +325,7 @@ except:
 #
 '''
 try:
-    if (not(fsmd_stim['fsmdstimulus']['endstate'] is None)):
+    if not(fsmd_stim['fsmdstimulus']['endstate'] is None):
         if state == fsmd_stim['fsmdstimulus']['endstate']:
             print('End-state reached.')
             repeat = False
