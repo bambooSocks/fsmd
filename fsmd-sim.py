@@ -257,16 +257,20 @@ isRunning = True
 
 while isRunning and cycle < iterations:
 
+    print("\n\n\033[33mCycle {}\033[0m".format(cycle))
+
     for si in fsmd_stim['fsmdstimulus']['setinput']:
-        if si['cycle'] == cycle:
+        if int(si['cycle']) == cycle:
             execute_setinput(si['expression'])
-            #TODO: reinitialize the variables after new input is loaded
-            #      should I run INITIALIZE again?
+
+    print("\n\033[34mInputs before\033[0m:")
+    for i in inputs:
+        print("{} is {}".format(i, eval(i, {'__builtins__': None}, inputs)))
 
     for case in fsmd[state]:
         if evaluate_condition(case['condition']):
 
-            print("\n\n\033[32mCycle count\033[0m: {}".format(cycle))
+            print("\n\033[32mCycle count\033[0m: {}".format(cycle))
             print("\033[32mCurrent state\033[0m: {}\n".format(state) +
                   "\033[32mCondition evaluated\033[0m: {}\n".format(case['condition']) +
                   "\033[32mInstruction executed\033[0m: {}\n".format(case['instruction']) +
