@@ -4,7 +4,7 @@ import sys
 import xmltodict
 
 print("Welcome to the FSMD simulator! - Version ?? - Designed by ??")
-
+#modified
 if len(sys.argv) < 3:
     print('Too few arguments.')
     sys.exit(-1)
@@ -233,14 +233,51 @@ def merge_dicts(*dict_args):
 # Start to simulate
 cycle = 0
 state = initial_state
+repeat = True
 
 print('\n---Start simulation---')
 
-######################################
-######################################
-# Write your code here!
-######################################
-######################################
+while cycle < iterations and repeat:
+    try:
+        if (not (fsmd_stim['fsmdstimulus']['setinput'] is None)):
+            for setinput in fsmd_stim['fsmdstimulus']['setinput']:
+                if type(setinput) is str:
+                    # Only one element
+                    if int(fsmd_stim['fsmdstimulus']['setinput']['cycle']) == cycle:
+                        execute_setinput(fsmd_stim['fsmdstimulus']['setinput']['expression'])
+                    break
+                else:
+                    # More than 1 element
+                    if int(setinput['cycle']) == cycle:
+                        execute_setinput(setinput['expression'])
+    except:
+        pass
+
+    for i in inputs: #To show input values
+        if cycle == 0:
+            print("{}".format(inputs[i]), '\n')
+
+    for transition in fsmd[state]:
+        if evaluate_condition(transition['condition']):
+            print(cycle)
+            print(state)
+            print(condition)
+            for v in variables:
+                print(format(variables[v]))
+            execute_instruction(transition['instruction'])
+            for v in variables:
+                print(format(variables[v]))
+            state = transition['nextstate']
+            try:
+                if (not (fsmd_stim['fsmdstimulus']['endstate'] is None)):
+                    if state == fsmd_stim['fsmdstimulus']['endstate']:
+                        print('End-state reached.')
+                        repeat = False
+            except:
+                pass
+            print('\n')
+            break
+    cycle += 1
 
 print('\n---End of simulation---')
 
