@@ -2,6 +2,7 @@
 
 import sys
 import xmltodict
+from pprint import pprint
 
 print("Welcome to the FSMD simulator! - Version ?? - Designed by ??")
 
@@ -199,13 +200,14 @@ def execute_instruction(instruction):
     return
 
 
+
 #
 # Description:
 # This function evaluates a Python compatible boolean expressions of
 # conditions passed as string using the conditions defined in the variable 'conditions'
 # and using the operands stored in the dictionaries 'variables' and 'inputs
 # It returns True or False
-#
+
 def evaluate_condition(condition):
     if condition == 'True' or condition=='true' or condition == 1:
         return True
@@ -235,6 +237,57 @@ cycle = 0
 state = initial_state
 
 print('\n---Start simulation---')
+repeat = True
+while cycle < iterations and repeat:
+    print("\n\n\n")
+    try:
+        if (not (fsmd_stim['fsmdstimulus']['setinput'] is None)):
+            for setinput in fsmd_stim['fsmdstimulus']['setinput']:
+
+                if type(setinput) is str:
+                    # Only one element
+                    if int(fsmd_stim['fsmdstimulus']['setinput']['cycle']) == cycle:
+                        execute_setinput(fsmd_stim['fsmdstimulus']['setinput']['expression'])
+                    break
+                else:
+                    # More than 1 element
+                    if int(setinput['cycle']) == cycle:
+                        execute_setinput(setinput['expression'])
+    except:
+        pass
+
+    for i in inputs:
+        print('the set inputs are{}'.format(inputs[i]))
+    for transition in fsmd[state]:
+        print("cycle is: %2d" % cycle)
+        for v in variables:
+            print('the key is {}'.format(v), 'the variables BEFORE are {}\n'.format(variables[v]))
+        if evaluate_condition(transition['condition']):
+            print('current state is {}\n'.format(state))
+            execute_instruction(transition['instruction'])
+            print('instruction is:{}\n'.format(transition['instruction']))
+            print('condition is:{}\n'.format(transition['condition']))
+            for v in variables:
+
+                print('the variables AFTER are {}\n'.format(variables[v]))
+            state = transition['nextstate']
+            print('next state is:{}'.format(state))
+            try:
+                if (not (fsmd_stim['fsmdstimulus']['endstate'] is None)):
+                    if state == fsmd_stim['fsmdstimulus']['endstate']:
+                        print('End-state reached.')
+                        repeat = False
+            except:
+                pass
+
+    cycle += 1
+
+
+pprint(fsmd_stim)
+
+
+# for state in fsmd:
+#     pass
 
 ######################################
 ######################################
