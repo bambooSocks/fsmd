@@ -28,8 +28,6 @@ if len(sys.argv) == 4:
 
 print("\n--FSMD description--")
 
-pprint(fsmd_des)
-
 #
 # Description:
 # The 'states' variable of type 'list' contains the list of all states names.
@@ -259,39 +257,49 @@ while isRunning and cycle < iterations:
 
     print("\n\n\033[33mCycle {}\033[0m".format(cycle))
 
-    for si in fsmd_stim['fsmdstimulus']['setinput']:
-        if int(si['cycle']) == cycle:
-            execute_setinput(si['expression'])
+    if fsmd_stim != {} and not(fsmd_stim['fsmdstimulus']['setinput'] is None):
+        for si in fsmd_stim['fsmdstimulus']['setinput']:
+            if type(si) is str:
+                # Only one element
+                if int(si['cycle']) == cycle:
+                    execute_setinput(si['expression'])
+                break
+            else:
+                # More than 1 element
+                if int(si['cycle']) == cycle:
+                    execute_setinput(si['expression'])
 
     print("\n\033[34mInputs before\033[0m:")
     for i in inputs:
-        print("{} is {}".format(i, eval(i, {'__builtins__': None}, inputs)))
+        print("{} is {}".format(i, inputs[i]))
 
-    for case in fsmd[state]:
-        if evaluate_condition(case['condition']):
+    for transition in fsmd[state]:
+        if evaluate_condition(transition['condition']):
 
             print("\n\033[32mCycle count\033[0m: {}".format(cycle))
             print("\033[32mCurrent state\033[0m: {}\n".format(state) +
-                  "\033[32mCondition evaluated\033[0m: {}\n".format(case['condition']) +
-                  "\033[32mInstruction executed\033[0m: {}\n".format(case['instruction']) +
-                  "\033[32mNew state\033[0m: {}".format(case['nextstate']))
+                  "\033[32mCondition evaluated\033[0m: {}\n".format(transition['condition']) +
+                  "\033[32mInstruction executed\033[0m: {}\n".format(transition['instruction']) +
+                  "\033[32mNew state\033[0m: {}".format(transition['nextstate']))
 
             print("\n\033[34mVariables before\033[0m:")
             for v in variables:
-                print("{} is {}".format(v, eval(v, {'__builtins__': None}, variables)))
+                print("{} is {}".format(v, variables[v]))
 
-            execute_instruction(case['instruction'])
+            execute_instruction(transition['instruction'])
 
             print("\n\033[34mVariables after\033[0m:")
             for v in variables:
-                print("{} is {}".format(v, eval(v, {'__builtins__': None}, variables)))
+                print("{} is {}".format(v, variables[v]))
 
-            state = case['nextstate']
-            if fsmd_stim != {}:
+            state = transition['nextstate']
+
+            if fsmd_stim != {} and not (fsmd_stim['fsmdstimulus']['endstate'] is None):
                 if state == fsmd_stim['fsmdstimulus']['endstate']:
                     print("\n\033[31mProgram terminated due to endstate was reached\033[0m")
                     isRunning = False
             break
+
     cycle += 1
 
 if cycle == iterations:
