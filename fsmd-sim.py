@@ -3,8 +3,6 @@
 import sys
 import xmltodict
 
-from pprint import *
-
 print("Welcome to the FSMD simulator! - Version ?? - Designed by ??")
 
 if len(sys.argv) < 3:
