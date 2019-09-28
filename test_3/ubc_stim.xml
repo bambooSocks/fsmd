@@ -1,0 +1,16 @@
+<!-- Unsigned Binary Converter stimuli file by Matej Majtan -->
+<fsmdstimulus>
+
+  <setinput>
+    <cycle>0</cycle>
+    <expression>in_bin = 101010101010</expression>
+  </setinput>
+
+  <setinput>
+    <cycle>1</cycle>
+    <expression>in_bin = 0</expression>
+  </setinput>
+
+  <endstate>DONE</endstate>
+
+</fsmdstimulus>
