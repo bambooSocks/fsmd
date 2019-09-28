@@ -3,7 +3,7 @@
 import sys
 import xmltodict
 
-print("Welcome to the FSMD simulator! - Version ?? - Designed by ??")
+print("Welcome to the FSMD simulator! - Version 1.0.0 - Designed by Matej Majtan, Mihaela-Elena Nistor and Clifford Arnold III Rhodes")
 
 if len(sys.argv) < 3:
     print('Too few arguments.')
@@ -249,12 +249,11 @@ print('\n---Start simulation---')
 
 isRunning = True
 
-# pprint(fsmd_stim['fsmdstimulus'])
-
 while isRunning and cycle < iterations:
 
     print("\n\n\033[33mCycle {}\033[0m".format(cycle))
 
+    # check for setinputs to be set in current cycle
     if fsmd_stim != {} and not(fsmd_stim['fsmdstimulus']['setinput'] is None):
         for si in fsmd_stim['fsmdstimulus']['setinput']:
             if type(si) is str:
@@ -271,7 +270,9 @@ while isRunning and cycle < iterations:
     for i in inputs:
         print("{} is {}".format(i, inputs[i]))
 
+    # loop through all transition in current state
     for transition in fsmd[state]:
+        # check for condition of the transition
         if evaluate_condition(transition['condition']):
 
             print("\n\033[32mCycle count\033[0m: {}".format(cycle))
@@ -290,8 +291,10 @@ while isRunning and cycle < iterations:
             for v in variables:
                 print("{} is {}".format(v, variables[v]))
 
+            # set current state to the next state
             state = transition['nextstate']
 
+            # check whether the next state is end state from stimuli file
             if fsmd_stim != {} and not (fsmd_stim['fsmdstimulus']['endstate'] is None):
                 if state == fsmd_stim['fsmdstimulus']['endstate']:
                     print("\n\033[31mProgram terminated due to endstate was reached\033[0m")
